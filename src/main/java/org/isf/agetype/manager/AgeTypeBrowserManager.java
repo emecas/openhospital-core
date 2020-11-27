@@ -45,7 +45,7 @@ public class AgeTypeBrowserManager {
 	 * @return a list of {@link AgeType} or <code>null</code> if the operation fails.
 	 * @throws OHServiceException 
 	 */
-	public ArrayList<AgeType> getAgeType() throws OHServiceException {
+	public ArrayList<AgeType> getAgeType() {
         return ioOperations.getAgeType();
 	}
 
@@ -85,7 +85,7 @@ public class AgeTypeBrowserManager {
 	 * @return the retrieved element, <code>null</code> otherwise.
 	 * @throws OHServiceException 
 	 */
-	public AgeType getTypeByCode(int index) throws OHServiceException {
+	public AgeType getTypeByCode(int index) {
         return ioOperations.getAgeTypeByCode(index);
 	}
 

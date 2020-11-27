@@ -49,7 +49,7 @@ public class AgeTypeIoOperations
 	 * @return a list of {@link AgeType}.
 	 * @throws OHServiceException if an error occurs retrieving the age types.
 	 */
-	public ArrayList<AgeType> getAgeType() throws OHServiceException 
+	public ArrayList<AgeType> getAgeType() 
 	{
 		return new ArrayList<AgeType>(repository.findAllByOrderByCodeAsc());
 	}
@@ -79,7 +79,7 @@ public class AgeTypeIoOperations
 	 * @throws OHServiceException if an error occurs retrieving the item.
 	 */
 	public AgeType getAgeTypeByCode(
-			int index) throws OHServiceException 
+			int index)  
 	{	
 		String code = "";
 		AgeType ageType = null;
