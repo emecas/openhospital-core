@@ -59,6 +59,7 @@ import org.isf.utils.exception.OHException;
 import org.isf.ward.model.Ward;
 import org.isf.ward.service.WardIoOperationRepository;
 import org.isf.ward.test.TestWard;
+import org.jfree.util.Log;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -68,6 +69,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ContextConfiguration;
@@ -80,6 +82,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RunWith(Parameterized.class)
 @ContextConfiguration(locations = { "classpath:applicationContext.xml" })
 public class Tests extends OHCoreTestCase {
+	
+	private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(OHCoreTestCase.class);
+
 
 	@ClassRule
 	public static final SpringClassRule scr = new SpringClassRule();
@@ -122,10 +127,14 @@ public class Tests extends OHCoreTestCase {
 	@Autowired
 	ApplicationEventPublisher applicationEventPublisher;
 
-	public Tests(boolean in, boolean out, boolean toward) {
+	public Tests(boolean in, boolean out) {//, boolean toward) {
 		GeneralData.AUTOMATICLOT_IN = in;
 		GeneralData.AUTOMATICLOT_OUT = out;
-		GeneralData.AUTOMATICLOTWARD_TOWARD = toward;
+		//GeneralData.AUTOMATICLOTWARD_TOWARD = toward;
+	}
+	
+	public void logGeneralDataProperties(){
+		LOGGER.info("AUTOMATICLOT_IN: {} AUTOMATICLOT_OUT: {} AUTOMATICLOTWARD_TOWARD: {} LANGUAGE: {}", GeneralData.AUTOMATICLOT_IN, GeneralData.AUTOMATICLOT_OUT, GeneralData.AUTOMATICLOTWARD_TOWARD, GeneralData.LANGUAGE);
 	}
 	
 	@BeforeClass
@@ -168,14 +177,14 @@ public class Tests extends OHCoreTestCase {
 	@Parameterized.Parameters(name ="Test with AUTOMATICLOT_IN={0}, AUTOMATICLOT_OUT={1}, AUTOMATICLOTWARD_TOWARD={2}")
 	public static Collection<Object[]> automaticlot() {
 		return Arrays.asList(new Object[][] {
-				{ false, false, false },
-				{ false, false, true },
-				{ false, true, false },
-				{ false, true, true },
-				{ true, false, false },
-				{ true, false, true },
-				{ true, true, false },
-				{ true, true, true }
+				{ false, false},//, false },
+				//{ false, false, true },
+				{ false, true},//, false },
+				//{ false, true, true },
+				{ true, false},//, false },
+				//{ true, false, true },
+				{ true, true}//, false },
+				//{ true, true, true }
 		});
 	}
 
@@ -230,6 +239,7 @@ public class Tests extends OHCoreTestCase {
 
 	@Test
 	public void testIoNewAutomaticDischargingMovementDifferentLots() throws Exception {
+		logGeneralDataProperties();
 		int code = _setupTestMovement(false);
 		Movement foundMovement = (Movement) jpa.find(Movement.class, code);
 		

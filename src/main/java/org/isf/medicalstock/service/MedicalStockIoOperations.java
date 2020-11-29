@@ -37,6 +37,7 @@ import org.isf.medicalstockward.service.MedicalStockWardIoOperationRepository;
 import org.isf.utils.db.TranslateOHServiceException;
 import org.isf.utils.exception.OHServiceException;
 import org.isf.ward.model.Ward;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +53,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(rollbackFor=OHServiceException.class)
 @TranslateOHServiceException
 public class MedicalStockIoOperations {
+	private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(MedicalStockIoOperations.class);
+
 
 	@Autowired
 	private MovementIoOperationRepository movRepository;
@@ -74,8 +77,14 @@ public class MedicalStockIoOperations {
 	 * @return <code>true</code> if automatic lot mode, <code>false</code> otherwise.
 	 */
 	private boolean isAutomaticLotMode() {
+		logGeneralDataProperties();
 		return GeneralData.AUTOMATICLOT_IN;
 	}
+	
+	public void logGeneralDataProperties(){
+		LOGGER.info("> AUTOMATICLOT_IN: {} AUTOMATICLOT_OUT: {} AUTOMATICLOTWARD_TOWARD: {} LANGUAGE: {}", GeneralData.AUTOMATICLOT_IN, GeneralData.AUTOMATICLOT_OUT, GeneralData.AUTOMATICLOTWARD_TOWARD, GeneralData.LANGUAGE);
+	}
+	
 
 	/**
 	 * Retrieves all medicals referencing the specified code.
