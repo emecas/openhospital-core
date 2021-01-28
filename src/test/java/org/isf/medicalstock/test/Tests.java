@@ -24,11 +24,16 @@ package org.isf.medicalstock.test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.List;
 
+import javax.persistence.EntityManager;
+
 import org.isf.OHCoreTestCase;
+import org.isf.generaldata.GeneralData;
 import org.isf.medicals.model.Medical;
 import org.isf.medicals.service.MedicalsIoOperationRepository;
 import org.isf.medicals.test.TestMedical;
@@ -54,15 +59,39 @@ import org.isf.utils.exception.OHException;
 import org.isf.ward.model.Ward;
 import org.isf.ward.service.WardIoOperationRepository;
 import org.isf.ward.test.TestWard;
+import org.jfree.util.Log;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.rules.SpringClassRule;
+import org.springframework.test.context.junit4.rules.SpringMethodRule;
+import org.springframework.transaction.annotation.Transactional;
 
+
+@Transactional
+@RunWith(Parameterized.class)
+@ContextConfiguration(locations = { "classpath:applicationContext.xml" })
 public class Tests extends OHCoreTestCase {
+	
+	private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(OHCoreTestCase.class);
 
+
+	@ClassRule
+	public static final SpringClassRule scr = new SpringClassRule();
+
+	@Rule
+	public final SpringMethodRule smr = new SpringMethodRule();
+	
 	private static DbJpaUtil jpa;
 	private static TestLot testLot;
 	private static TestMovement testMovement;
@@ -71,6 +100,9 @@ public class Tests extends OHCoreTestCase {
 	private static TestMovementType testMovementType;
 	private static TestWard testWard;
 	private static TestSupplier testSupplier;
+	
+	@Autowired
+	private EntityManager entityManager;
 
 	@Autowired
 	MedicalStockIoOperations medicalStockIoOperation;
@@ -95,6 +127,16 @@ public class Tests extends OHCoreTestCase {
 	@Autowired
 	ApplicationEventPublisher applicationEventPublisher;
 
+	public Tests(boolean in, boolean out) {//, boolean toward) {
+		GeneralData.AUTOMATICLOT_IN = in;
+		GeneralData.AUTOMATICLOT_OUT = out;
+		//GeneralData.AUTOMATICLOTWARD_TOWARD = toward;
+	}
+	
+	public void logGeneralDataProperties(){
+		LOGGER.info("AUTOMATICLOT_IN: {} AUTOMATICLOT_OUT: {} AUTOMATICLOTWARD_TOWARD: {} LANGUAGE: {}", GeneralData.AUTOMATICLOT_IN, GeneralData.AUTOMATICLOT_OUT, GeneralData.AUTOMATICLOTWARD_TOWARD, GeneralData.LANGUAGE);
+	}
+	
 	@BeforeClass
 	public static void setUpClass() {
 		jpa = new DbJpaUtil();
@@ -109,7 +151,7 @@ public class Tests extends OHCoreTestCase {
 
 	@Before
 	public void setUp() throws OHException {
-		cleanH2InMemoryDb();
+		cleanH2InMemoryDB();
 		jpa.open();
 		testLot.setup(false);
 	}
@@ -117,8 +159,33 @@ public class Tests extends OHCoreTestCase {
 	@After
 	public void tearDown() throws Exception
 	{
-		jpa.flush();
 		jpa.close();
+	}
+
+	@AfterClass
+	public static void tearDownClass() throws OHException 
+	{
+		testLot = null;
+		testMovement = null;
+		testMedical = null;
+		testMedicalType = null;
+		testMovementType = null;
+		testWard = null;
+		testSupplier = null;
+	}
+
+	@Parameterized.Parameters(name ="Test with AUTOMATICLOT_IN={0}, AUTOMATICLOT_OUT={1}, AUTOMATICLOTWARD_TOWARD={2}")
+	public static Collection<Object[]> automaticlot() {
+		return Arrays.asList(new Object[][] {
+				{ false, false},//, false },
+				//{ false, false, true },
+				{ false, true},//, false },
+				//{ false, true, true },
+				{ true, false},//, false },
+				//{ true, false, true },
+				{ true, true}//, false },
+				//{ true, true, true }
+		});
 	}
 
 	@Test
@@ -172,9 +239,10 @@ public class Tests extends OHCoreTestCase {
 
 	@Test
 	public void testIoNewAutomaticDischargingMovementDifferentLots() throws Exception {
+		logGeneralDataProperties();
 		int code = _setupTestMovement(false);
-		Movement foundMovement = movementIoOperationRepository.findOne(code);
-		//medicalStockIoOperation.newMovement(foundMovement);
+		Movement foundMovement = (Movement) jpa.find(Movement.class, code);
+		
 		Medical medical = foundMovement.getMedical();
 		MovementType medicalType = foundMovement.getType();
 		Ward ward = foundMovement.getWard();
@@ -370,5 +438,19 @@ public class Tests extends OHCoreTestCase {
 	private void _checkMovementIntoDb(int code) throws OHException {
 		Movement foundMovement = movementIoOperationRepository.findOne(code);
 		testMovement.check(foundMovement);
+	}
+
+	private void cleanH2InMemoryDB() throws OHException {
+		List<Object[]> show_tables = entityManager.createNativeQuery("SHOW TABLES").getResultList();
+		show_tables
+			.stream()
+			.map(result -> (String) result[0])
+			.forEach(this::truncateTable);
+	}
+
+	private void truncateTable(String name) {
+		entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE").executeUpdate();
+		entityManager.createNativeQuery("TRUNCATE TABLE " + name).executeUpdate();
+		entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE").executeUpdate();
 	}
 }

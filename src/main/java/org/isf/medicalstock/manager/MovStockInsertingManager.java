@@ -229,6 +229,7 @@ public class MovStockInsertingManager {
 	 * JOptionPane.showMessageDialog(null, e.getMessage()); return 0; } }
 	 */
 
+	//TODO OP-255 removed, since it is not being used
 	private boolean isAutomaticLot_In() {
 			return GeneralData.AUTOMATICLOT_IN;
 		}
